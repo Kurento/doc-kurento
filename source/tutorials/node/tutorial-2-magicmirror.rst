@@ -101,7 +101,7 @@ the following picture:
    :alt:     One to one video call signaling protocol
    :width: 600px
 
-   *One to one video call signaling protocol*
+   *Magic mirror signaling protocol*
 
 As you can see in the diagram, an `SDP`:term: needs to be exchanged between
 client and server to establish the `WebRTC`:term: session between the browser
