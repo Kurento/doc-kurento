@@ -186,7 +186,11 @@ by default. For this reason, you'll need to force them to accept it.
    JsonRpcClientWebSocket rpcClient = new JsonRpcClientWebSocket(uri, sec);
    KurentoClient kuretoClient = KurentoClient.createFromJsonRpcClient(rpcClient);
 
-* Node applications: Take a look at `this page <https://github.com/coolaj86/node-ssl-root-cas/wiki/Painless-Self-Signed-Certificates-in-node.js>`__.
+* Node applications: Take a look at `this page <https://github.com/coolaj86/node-ssl-root-cas/wiki/Painless-Self-Signed-Certificates-in-node.js>`__ or for a fastest but INSECURE alternative, set the TLS rejection environment variable flag (``NODE_TLS_REJECT_UNAUTHORIZED``) to 0 (false), this will disable the TLS validation for your whole node app, you can set this environment variable value before executing your app or in execution time by adding the following code before performing the connection:
+
+.. sourcecode:: javascript
+
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 After having configured the certificate in your Application Server, you have to change the WebSocket URI in your application logic, and make sure the WebSocket URL starts with ``wss://`` instead of the insecure version ``ws://``. For instance, in the *hello-world* application within the tutorials, this would be done as follows:
 
