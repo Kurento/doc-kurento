@@ -77,7 +77,7 @@ Visualization:
 Types of NAT
 ============
 
-There are two categories of NAT behavior, namely **Cone** and **Symmetric** NAT. The crucial difference between them is that the former will use the same port numbers for internal and external IP tuples, while the later will always use different numbers for each side of the NAT. This will be explained later in more detail.
+There are two categories of NAT behavior, namely **Cone** and **Symmetric** NAT. The crucial difference between them is that the former will use the same port numbers for internal and external IP tuples, while the latter will always use different numbers for each side of the NAT. This will be explained later in more detail.
 
 Besides, there are 3 types of Cone NATs, with varying degrees of restrictions regarding the allowed sources of incoming connections. To connect with a local machine which is behind a Cone NAT, it's first required that the local machine performs an outbound connection to a remote one. This way, a dynamic rule will be created for the destination IP tuple, allowing the remote machine to connect back. The only exception is the Full Cone NAT, where a static rule can be created beforehand by an administrator, thanks to the fact that this kind of NAT ignores what is the source IP tuple of the remote machine that is connecting.
 
