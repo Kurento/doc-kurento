@@ -51,7 +51,8 @@ Configure a Java server to use HTTPS
 
 .. sourcecode:: bash
 
-   mvn -U clean spring-boot:run -Dkms.url=ws://kms_host:kms_port/kurento
+   mvn -U clean spring-boot:run \
+       -Dspring-boot.run.jvmArguments="-Dkms.url=ws://{KMS_HOST}:8888/kurento"
 
 .. note::
 
@@ -124,13 +125,17 @@ WebRTC requires HTTPS, so your JavaScript application must be served by a secure
    sudo apt-get install --yes nodejs
    sudo npm install -g http-server
 
-* You will need to provide a valid SSL certificate in order to enable HTTPS. Here, there are two alternatives:
+* You will need to provide a valid SSL certificate in order to enable HTTPS. There are two alternatives:
 
-  1. Request a certificate from a local Certification Authority (*CA*).
+  1. Obtain a certificate from a trusted Certification Authority (*CA*).
 
-  2. Create your own self-signed certificate as explained `here <https://www.akadia.com/services/ssh_test_certificate.html>`__. This link will teach you how to create the required files: *server.crt*, *server.key*, and *server.csr*.
+  2. Create your own untrusted self-signed certificate. You can search articles online that explain how to do this, for example `this one <https://www.akadia.com/services/ssh_test_certificate.html>`__.
 
-* Start the web server using the SSL certificate:
+     Alternatively, it can be much easier and convenient using a self-signed certificate generation tool, such as `mkcert <https://github.com/FiloSottile/mkcert>`__.
+
+     Note that while a self-signed certificate can be used, browsers will show a big security warning. Users will see this warning, and must click to accept the unsafe certificate before proceeding to the page.
+
+* Start the HTTPS web server, using the SSL certificate:
 
   .. code-block:: bash
 
@@ -143,70 +148,98 @@ WebRTC requires HTTPS, so your JavaScript application must be served by a secure
 Securing Kurento Media Server
 =============================
 
-First, you need to change the configuration file of Kurento Media Server, i.e.
-``/etc/kurento/kurento.conf.json``, uncommenting the following lines::
+With the default configuration, Kurento Media Server will use the ``ws://`` URI scheme for non-secure WebSocket connections, listening on the port ``8888``. Application Servers (Kurento clients) will establish a WebSocket connection with KMS, in order to control the media server and send messages conforming to the :doc:`/features/kurento_api`.
+
+This is fine for initial stages of application development, but before deploying on production environments you'll probably want to move to ``wss://`` connections, i.e. using Secure WebSocket, which by default uses the port ``8433``.
+
+To enable Secure WebSocket, edit the main KMS configuration file (*/etc/kurento/kurento.conf.json*), and un-comment the following lines:
+
+.. code-block:: text
 
    "secure": {
      "port": 8433,
-     "certificate": "defaultCertificate.pem",
-     "password": ""
-   },
+     "certificate": "cert+key.pem",
+     "password": "KEY_PASSWORD"
+   }
 
-If this PEM certificate is a signed certificate (by a Certificate Authority such
-as Verisign), then you are done. If you are going to use a self-signed
-certificate (suitable for development), then there is still more work to do.
+If you use a signed certificate issued by a trusted Certificate Authority such as Verisign or Let's Encrypt, then you are done. Just skip to the next section: :ref:`features-security-kms-wss-connect`.
 
-You can generate a self signed certificate by doing this::
+However, if you are going to use an untrusted self-signed certificate (typically during development), there is still more work to do.
+
+You can generate your own self-signed certificate, with these commands:
+
+.. code-block:: shell
 
    certtool --generate-privkey --outfile defaultCertificate.pem
-   echo 'organization = your organization name' > certtool.tmpl
+
+   echo 'organization = your organization name' >certtool.tmpl
+
    certtool --generate-self-signed --load-privkey defaultCertificate.pem \
-      --template certtool.tmpl >> defaultCertificate.pem
+      --template certtool.tmpl >>defaultCertificate.pem
+
    sudo chown kurento defaultCertificate.pem
 
-Due to the fact that the certificate is self-signed, applications will reject it
-by default. For this reason, you'll need to force them to accept it.
+Alternatively, it is much easier and convenient using a self-signed certificate generation tool, such as `mkcert <https://github.com/FiloSottile/mkcert>`__:
 
-* Browser applications: You'll need to manually accept the certificate as
-  trusted one before secure WebSocket connections can be established. By
-  default, this can be done by connecting to https://localhost:8433/kurento
-  and accepting the certificate in the browser.
+.. code-block:: shell
 
-* Java applications: Follow the instructions of `this link <https://www.mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/>`__
-  (get ``InstallCert.java`` from
-  `here <https://code.google.com/p/java-use-examples/source/browse/trunk/src/com/aw/ad/util/InstallCert.java>`__).
-  You'll need to instruct the ``KurentoClient`` needs to be configured to allow
-  the use of certificates. For this purpose, we need to create our own
-  ``JsonRpcClient``:
+   CAROOT="$PWD" mkcert -cert-file ./cert.pem -key-file ./key.pem \
+       "127.0.0.1" \
+       "::1"       \
+       "localhost" \
+       "a.test"    \
+       "b.test"    \
+       "c.test"
 
-.. sourcecode:: java
+Now, because self-signed certificates are untrusted by nature, client browsers and server applications will reject it by default. You'll need to force all consumers of the certificate to accept it:
+
+* **Java applications**. Follow the instructions of this link: `SunCertPathBuilderException: unable to find valid certification path to requested target <https://mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/>`__ (`archive <https://web.archive.org/web/20200101052022/https://mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/>`__). Get ``InstallCert.java`` from here: https://github.com/escline/InstallCert.
+
+  You'll need to instruct the *KurentoClient* to allow using certificates. For this purpose, create an ``JsonRpcClient``:
+
+.. code-block:: java
 
    SslContextFactory sec = new SslContextFactory(true);
    sec.setValidateCerts(false);
    JsonRpcClientWebSocket rpcClient = new JsonRpcClientWebSocket(uri, sec);
-   KurentoClient kuretoClient = KurentoClient.createFromJsonRpcClient(rpcClient);
+   KurentoClient kurentoClient = KurentoClient.createFromJsonRpcClient(rpcClient);
 
-* Node applications: Take a look at `this page <https://github.com/coolaj86/node-ssl-root-cas/wiki/Painless-Self-Signed-Certificates-in-node.js>`__ or for a fastest but INSECURE alternative, set the TLS rejection environment variable flag (``NODE_TLS_REJECT_UNAUTHORIZED``) to 0 (false), this will disable the TLS validation for your whole node app, you can set this environment variable value before executing your app or in execution time by adding the following code before performing the connection:
+* **Node applications**. Take a look at this page: `Painless Self Signed Certificates in node.js <https://git.coolaj86.com/coolaj86/ssl-root-cas.js/src/branch/master/Painless-Self-Signed-Certificates-in-node.js.md>`__ (`archive <https://web.archive.org/web/20200610093038/https://git.coolaj86.com/coolaj86/ssl-root-cas.js/src/branch/master/Painless-Self-Signed-Certificates-in-node.js.md>`__).
 
-.. sourcecode:: javascript
+  For a faster but *INSECURE* alternative, configure Node to accept (instead of reject) invalid TLS certificates by default, setting the environment variable flag `NODE_TLS_REJECT_UNAUTHORIZED <https://nodejs.org/api/cli.html#cli_node_tls_reject_unauthorized_value>`__ to ``0``; this will disable the TLS validation for your whole Node app. You can set this environment variable before executing your app, or directly in your app code by adding the following line before performing the connection:
 
-    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+  .. code-block:: js
 
-After having configured the certificate in your Application Server, you have to change the WebSocket URI in your application logic, and make sure the WebSocket URL starts with ``wss://`` instead of the insecure version ``ws://``. For instance, in the *hello-world* application within the tutorials, this would be done as follows:
+     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-* Java: Changing this line in
-  `HelloWorldApp.java <https://github.com/Kurento/kurento-tutorial-java/blob/master/kurento-hello-world/src/main/java/org/kurento/tutorial/helloworld/HelloWorldApp.java>`__::
+* **Browser JavaScript**. Similar to what happens with self-signed certificates used for HTTPS, browsers also require the user to accept a security warning before Secure WebSocket connections can be established. This is done by *directly opening* the KMS WebSocket URL: ``https://{KMS_HOST}:8433/kurento``.
 
-   final static String DEFAULT_KMS_WS_URI = "wss://localhost:8433/kurento";
 
-* Browser JavaScript: Changing this line in
-  `index.js <https://github.com/Kurento/kurento-tutorial-js/blob/master/kurento-hello-world/js/index.js>`__::
 
-   const ws_uri = 'wss://' + location.hostname + ':8433/kurento';
+.. _features-security-kms-wss-connect:
 
-* Node.js: Changing this line in
-  `server.js <https://github.com/Kurento/kurento-tutorial-node/blob/master/kurento-hello-world/server.js>`__::
+Connecting to a secured KMS
+---------------------------
 
-   const ws_uri = "wss://localhost:8433/kurento";
+Now that KMS is listening for Secure WebSocket connections, and (if using a self-signed certificate) your Application Server is configured to accept the certificate used in KMS, you have to change the WebSocket URL used in your application logic.
 
-* All: Passing the WebSocket URL to the Application as a startup parameter (see each individual tutorial page to get the syntax for doing so).
+Make sure your application uses a WebSocket URL that starts with ``wss://`` instead of ``ws://``. Depending on the platform, this is done in different ways:
+
+* **Java**: Launch with a ``kms.url`` property. For example:
+
+  .. code-block:: java
+
+     mvn -U clean spring-boot:run \
+         -Dkms.url="wss://{KMS_HOST}:8433/kurento"
+
+* **Node**: Launch with the ``ws_uri`` command-line argument. For example:
+
+  .. code-block:: js
+
+     npm start -- --ws_uri="wss://{KMS_HOST}:8433/kurento"
+
+* **Browser JavaScript**: Application-specific method. For example, using hardcoded values:
+
+  .. code-block:: js
+
+     const ws_uri: "wss://" + location.hostname + ":8433/kurento";

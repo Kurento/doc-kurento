@@ -109,73 +109,75 @@ The **default suggested level** is what KMS sets automatically when it is starte
 
 From that baseline, one can add any other values to extend the amount of information that gets logged:
 
-- Event MediaFlow{In,Out} state changes
+* **MediaFlowIn**, **MediaFlowOut** state changes, important to know if media is actually flowing between endpoints (see :ref:`events-mediaelement`):
 
   .. code-block:: text
 
      export GST_DEBUG="${GST_DEBUG:-3},KurentoMediaElementImpl:5"
 
-- ICE candidate gathering
+* **WebRTC** related logging:
+
+  - SDP Offer/Answer messages:
+
+    .. code-block:: text
+
+       export GST_DEBUG="${GST_DEBUG:-3},kmssdpsession:5"
+
+  - ICE candidate gathering:
+
+    .. code-block:: text
+
+       export GST_DEBUG="${GST_DEBUG:-3},webrtcendpoint:5,kmswebrtcsession:5,kmsiceniceagent:5"
+
+    .. note::
+
+       - See also :ref:`logging-libnice` to enable advanced logging.
+       - *webrtcendpoint* shows detailed messages from the WebRtcEndpoint (good enough for most cases).
+       - *kmswebrtcsession* shows messages from the internal WebRtcSession class (broarder decision logic).
+       - *kmsiceniceagent* shows messages from the *libnice* Agent (very low-level, probably too verbose for day to day troubleshooting).
+
+  - REMB congestion control:
+
+    .. code-block:: text
+
+       export GST_DEBUG="${GST_DEBUG:-3},kmsremb:5"
+
+    .. note::
+
+       - *kmsremb:5* (debug level 5) shows only effective REMB send/recv values.
+       - *kmsremb:6* (debug level 6) shows full (very verbose) handling of all source SSRCs.
+
+* **PlayerEndpoint**:
 
   .. code-block:: text
 
-     export GST_DEBUG="${GST_DEBUG:-3},kmsiceniceagent:5,kmswebrtcsession:5,webrtcendpoint:4"
+     export GST_DEBUG="${GST_DEBUG:-3},kmselement:5,playerendpoint:5,appsrc:4,agnosticbin*:5,uridecodebin:6,rtspsrc:5,souphttpsrc:5,*CAPS*:3"
 
-  .. note::
-
-     - See also :ref:`logging-libnice` to enable advanced logging.
-     - *kmsiceniceagent* shows messages from the Nice Agent (low-level handling of candidates).
-     - *kmswebrtcsession* shows messages from the KMS WebRtcSession class (broarder decision logic).
-     - *webrtcendpoint* shows messages from the WebRtcEndpoint (very basic logging).
-
-- Player
-
-  .. code-block:: text
-
-     export GST_DEBUG="${GST_DEBUG:-3},playerendpoint:5"
-
-- Recorder
+* **RecorderEndpoint**:
 
   .. code-block:: text
 
      export GST_DEBUG="${GST_DEBUG:-3},KurentoRecorderEndpointImpl:4,recorderendpoint:5,qtmux:5"
 
-- REMB congestion control
-
-  .. code-block:: text
-
-     export GST_DEBUG="${GST_DEBUG:-3},kmsremb:5"
-
-  .. note::
-
-     - *kmsremb:5* (debug level 5) shows only effective REMB send/recv values.
-     - *kmsremb:6* (debug level 6) shows full (very verbose) handling of all source SSRCs.
-
-- RPC calls
+* **JSON-RPC** API server calls:
 
   .. code-block:: text
 
      export GST_DEBUG="${GST_DEBUG:-3},KurentoWebSocket*:5"
 
-- RTP Sync
+* **RTP Synchronization**:
 
   .. code-block:: text
 
      export GST_DEBUG="${GST_DEBUG:-3},kmsutils:5,rtpsynchronizer:5,rtpsynccontext:5,basertpendpoint:5"
 
-- SDP processing
-
-  .. code-block:: text
-
-     export GST_DEBUG="${GST_DEBUG:-3},kmssdpsession:5"
-
-- Transcoding of media
+* **Transcoding of media**:
 
   .. code-block:: text
 
      export GST_DEBUG="${GST_DEBUG:-3},Kurento*:5,agnosticbin*:5"
 
-- Unit tests
+* **Unit tests**:
 
   .. code-block:: text
 
@@ -197,13 +199,12 @@ This library uses the standard *GLib* logging functions, which comes disabled by
 
 To enable debug logging on *libnice*, set the environment variable ``G_MESSAGES_DEBUG`` with one or more of these values (separated by commas):
 
-- libnice
-- libnice-stun
-- libnice-tests
-- libnice-socket
-- libnice-pseudotcp
-- libnice-pseudotcp-verbose
-- all
+- ``libnice``: Required in order to enable logging in libnice.
+- ``libnice-verbose``: Enable extra verbose messages.
+- ``libnice-stun``: Log messages related to the :term:`STUN` protocol.
+- ``libnice-pseudotcp``: Log messages from the ICE-TCP module.
+- ``libnice-pseudotcp-verbose``: Enable extra verbose messages from ICE-TCP.
+- ``all``: Equivalent to using all previous flags.
 
 After doing this, GLib messages themselves must be enabled in the Kurento logging system, by setting an appropriate level for the ``glib`` component.
 

@@ -1,8 +1,16 @@
-=================
-Kurento Tutorials
-=================
+=========
+Tutorials
+=========
 
-This section contains tutorials showing how to use Kurento framework to build different types of :term:`WebRTC` and multimedia applications. These tutorials come in three flavors:
+This section contains tutorials showing how to use the Kurento framework to build different types of :term:`WebRTC` and multimedia applications.
+
+.. note::
+
+   These tutorials have been created with **learning purposes**. They don't have comprehensive error handling, or any kind of sophisticated session management. As such, *these tutorials should not be used in production environments*; they only show example code for you to study, in order to achieve what you want with your own code.
+
+   **Use at your own risk!**
+
+These tutorials come in three flavors:
 
 - **Java**: Showing applications where clients interact with *Spring Boot*-based
   applications, that host the logic orchestrating the communication among clients and control Kurento Media Server capabilities.
@@ -16,14 +24,13 @@ This section contains tutorials showing how to use Kurento framework to build di
          default-jdk \
          maven
 
+  Java tutorials are written on top of `Spring Boot <https://spring.io/projects/spring-boot>`__, so they already include most features expected from a full-fledged service, such as a web server or logging support.
+
+  Spring Boot is also able to create a "`fully executable jar <https://docs.spring.io/spring-boot/docs/current/reference/html/deployment.html#deployment-install>`__", a standalone executable built out of the application package. This executable comes already with support for commands such as ``start``, ``stop``, or ``restart``, so it can be used as a system service with either *init.d* (System V) and *systemd*. For more info, refer to the `Spring Boot documentation <https://docs.spring.io/spring-boot/docs/current/reference/html/deployment.html#deployment-service>`__ and online resources such as `this Stack Overflow answer <https://stackoverflow.com/questions/21503883/spring-boot-application-as-a-service/30497095#30497095>`__.
+
 - **Browser JavaScript**: These show applications executing at the browser and communicating directly with the Kurento Media Server. In these tutorials all logic is directly hosted by the browser. Hence, no application server is necessary.
 
 - **Node.js**: In which clients interact with an application server made with Node.js technology. The application server holds the logic orchestrating the communication among the clients and controlling Kurento Media Server capabilities for them.
-
-.. note::
-
-   The tutorials have been created with learning objectives. They are not intended to be used in production environments where different unmanaged error conditions may emerge.
-   **Use at your own risk!**
 
 .. note::
 

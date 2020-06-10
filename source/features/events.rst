@@ -22,6 +22,8 @@ Some error has occurred. Check the event parameters (such as *description*, *err
 
 
 
+.. _events-mediaelement:
+
 MediaElement events
 ===================
 
@@ -75,6 +77,8 @@ For example: If a *WebRtcEndpoint* receives a *VP8* video stream from a Chrome b
 - State = *NotTranscoding*: The *MediaElement* will *not* transcode the incoming media, because its format is compatible with the requested output.
 
 
+
+.. _events-basertpendpoint:
 
 BaseRtpEndpoint events
 ======================
@@ -170,6 +174,8 @@ A new local candidate has been found, after the ICE Gathering process was starte
 
 
 
+.. _events-icecomponentstatechange:
+
 IceComponentStateChange
 -----------------------
 
@@ -207,7 +213,7 @@ This graph shows the possible state changes (`source <https://cgit.freedesktop.o
 
 .. note::
 
-   The states *Ready* and *Failed* indicate that the ICE transport has completed gathering and is currently idle. However, since events such as adding a new interface or a new TURN server will cause the state to go back, *Ready* and *Failed* are **not** terminal states.
+   The states *Ready* and *Failed* indicate that the ICE transport has completed gathering and is currently idle. However, since events such as adding a new interface or a new :term:`STUN`/:term:`TURN` server will cause the state to go back, *Ready* and *Failed* are **not** terminal states.
 
 
 
@@ -217,6 +223,8 @@ IceGatheringDone
 All local candidates have been found, so the gathering process is finished for this peer. Note this doesn't imply that the remote peer has finished its own gathering, so more remote candidates might still arrive. Equivalent to the signal `NiceAgent::"candidate-gathering-done" <https://nice.freedesktop.org/libnice/NiceAgent.html#NiceAgent-candidate-gathering-done>`__.
 
 
+
+.. _events-newcandidatepairselected:
 
 NewCandidatePairSelected
 ------------------------
@@ -296,7 +304,7 @@ When a *WebRtcEndpoint* instance has been created, and all event handlers have b
 
 5. ``AddIceCandidate``
 
-   Repeated multiple times; the remote peer will continue sending its own gathered candidates, of any type: ``host``, ``srflx`` (*STUN*), ``relay`` (*TURN*).
+   Repeated multiple times; the remote peer will continue sending its own gathered candidates, of any type: ``host``, ``srflx`` (:term:`STUN`), ``relay`` (:term:`TURN`).
 
 6. ``IceCandidateFound``
 
