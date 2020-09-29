@@ -147,7 +147,7 @@ express is not a requirement for Kurento. The main script of this demo is
 
 In order to communicate the JavaScript client and the Node application server a
 WebSocket is used. The incoming messages to this WebSocket (variable ``ws`` in
-the code) are conveniently handled to implemented the signaling protocol
+the code) are conveniently handled to implement the signaling protocol
 depicted in the figure before (i.e. messages ``start``, ``stop``,
 ``onIceCandidate``).
 
