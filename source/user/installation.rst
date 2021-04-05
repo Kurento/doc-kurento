@@ -321,6 +321,97 @@ If you need to automate this, you could write a script similar to `healthchecker
 
 
 
+Checking RTP port connectivity
+------------------------------
+
+This section explains how you can perform a quick and dirty connectivity check between a remote client machine and Kurento Media Server, in scenarios where **the media server is not behind a NAT**.
+
+This will let you know if an end user, like a web browser, would be able to send audio and video to the media server. In other words, this is a way to check if the media server itself is reachable from the network that WebRTC or RTP connections will use. If this test fails, it could indicate a cause for missing media streams in your application.
+
+The check proposed here will not work if the media server sits behind a NAT, because we are not punching holes in it (e.g. with STUN, see :ref:`faq-stun-needed`); doing so is outside of the scope for this section, but you could also do it by hand if needed (like shown in :ref:`nat-diy-holepunch`).
+
+**First part (run commands on the Kurento Media Server machine)**
+
+Install required tools:
+
+.. code-block:: shell
+
+   sudo apt update && sudo apt install --yes jq
+
+   wget -O /tmp/websocat "https://github.com/vi/websocat/releases/download/v1.7.0/websocat_amd64-linux-static"
+   chmod +x /tmp/websocat
+
+Using the Kurento WebSocket JSON-RPC Protocol, create a MediaPipeline and RtpEndpoint, which is then used to generate an SDP Offer and get from it an UDP listen port:
+
+.. code-block:: shell
+
+   KURENTO_URL="ws://127.0.0.1:8888/kurento"
+
+   # Create a MediaPipeline.
+   PIPELINE="$(
+   /tmp/websocat -1 --jsonrpc "$KURENTO_URL" <<EOF | jq --raw-output .result.value
+   create { "type": "MediaPipeline" }
+   EOF
+   )"
+
+   # Create an RtpEndpoint.
+   ENDPOINT="$(
+   /tmp/websocat -1 --jsonrpc "$KURENTO_URL" <<EOF | jq --raw-output .result.value
+   create { "type": "RtpEndpoint", "constructorParams": { "mediaPipeline": "$PIPELINE" } }
+   EOF
+   )"
+
+   # Generate a new SDP Offer.
+   # This makes Kurento start listening on the RTP ports reported in the SDP.
+   SDP="$(
+   /tmp/websocat -1 --jsonrpc "$KURENTO_URL" <<EOF | jq --raw-output .result.value
+   invoke { "object": "$ENDPOINT", "operation": "generateOffer" }
+   EOF
+   )"
+
+   # Parse the SDP to get the first port found (from either audio or video).
+   KURENTO_PORT="$(echo "$SDP" | grep -Po -m1 'm=\w+ \K(\d+)')"
+   echo "$KURENTO_PORT"
+
+Take note of the ``KURENTO_PORT``, and use it in the next section:
+
+**Second part (run commands on a client machine)**
+
+This part describes a connectivity check that should be performed from any end user machine that wants to send media out to Kurento Media Server. In principle, if your server network is configured correctly, this test should be successful. Otherwise, in case of failure this is an indication that there are some issues in the network, which gives you a head start to troubleshoot missing media in your application.
+
+First, install required tools:
+
+.. code-block:: shell
+
+   sudo apt update && sudo apt install --yes nmap
+
+Then try to check if the RTP port that was opened in the previous step is now reachable from the client machine:
+
+.. code-block:: shell
+
+   KURENTO_IP=203.0.113.2  # The media server's public IP address.
+   KURENTO_PORT=12345      # The KURENTO_PORT that was obtained in the previous section.
+
+   # Check if Kurento's port is reachable from here.
+   # Note: '-sU' is to only scan for UDP.
+   sudo nmap -oG - -sU -p "$KURENTO_PORT" "$KURENTO_IP"
+
+If the media server's port is reachable from this client machine, you will see this output:
+
+.. code-block:: text
+
+   Host: 203.0.113.2 ()  Ports: 12345/open|filtered/udp/////
+
+Otherwise, if the port is blocked, the output will be like this:
+
+.. code-block:: text
+
+   Host: 203.0.113.2 ()  Ports: 12345/closed/udp/////
+
+Note however, that due to the nature of UDP this quick test can only be considered an approximation; intermediate firewalls or other network devices might still present a blocked port as open or filtered to the public, which would fool our connectivity test into thinking the port is actually reachable.
+
+
+
 .. Links
 
 .. _Amazon Web Services: https://aws.amazon.com
