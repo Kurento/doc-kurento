@@ -100,7 +100,7 @@ web server in the application and thus simplify the development process.
 
 
 The main class of this demo is
-`GroupCalldApp <https://github.com/Kurento/kurento-tutorial-java/blob/master/kurento-group-call/src/main/java/org/kurento/tutorial/groupcall/GroupCallApp.java>`_.
+`GroupCallApp <https://github.com/Kurento/kurento-tutorial-java/blob/master/kurento-group-call/src/main/java/org/kurento/tutorial/groupcall/GroupCallApp.java>`_.
 As you can see, the *KurentoClient* is instantiated in this class as a Spring
 Bean. This bean is used to create **Kurento Media Pipelines**, which are used
 to add media capabilities to the application. In this instantiation we see that
