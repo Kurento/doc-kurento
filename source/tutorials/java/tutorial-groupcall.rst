@@ -161,7 +161,7 @@ method implements the actions for requests, returning responses through the
 WebSocket. In other words, it implements the server part of the signaling
 protocol depicted in the previous sequence diagram.
 
-In the designed protocol there are five different kind of incoming messages to
+In the designed protocol there are four different kind of incoming messages to
 the application server: ``joinRoom``, ``receiveVideoFrom``, ``leaveRoom`` and
 ``onIceCandidate``. These messages are treated in the *switch* clause, taking
 the proper steps in each case.
@@ -293,7 +293,7 @@ web page, and are used in the
 In the following snippet we can see the creation of the WebSocket (variable
 ``ws``) in the path ``/groupcall``. Then, the ``onmessage`` listener of the
 WebSocket is used to implement the JSON signaling protocol in the client-side.
-Notice that there are three incoming messages to client:
+Notice that there are five incoming messages to client:
 ``existingParticipants``, ``newParticipantArrived``, ``participantLeft``,
 ``receiveVideoAnswer`` and ``iceCandidate``. Convenient actions are taken to
 implement each step in the communication. For example, in functions ``start``
