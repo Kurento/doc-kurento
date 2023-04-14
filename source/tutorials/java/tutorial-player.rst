@@ -170,8 +170,7 @@ to the *Server* : ``start``, ``stop``, ``pause``, ``resume``, ``doSeek``,
 
      private final Logger log = LoggerFactory.getLogger(PlayerHandler.class);
      private final Gson gson = new GsonBuilder().create();
-     private final ConcurrentHashMap<String, PlayerMediaPipeline> pipelines =
-         new ConcurrentHashMap<>();
+     private final ConcurrentHashMap<String, PlayerMediaPipeline> pipelines = new ConcurrentHashMap<>();
 
      @Override
      public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
@@ -253,27 +252,27 @@ message.
 .. sourcecode:: java
 
   private void start(final WebSocketSession session, JsonObject jsonMessage) {
-    final UserSession user = new UserSession(); MediaPipeline pipeline =
-    kurento.createMediaPipeline(); user.setMediaPipeline(pipeline);
-    WebRtcEndpoint webRtcEndpoint = new
-    WebRtcEndpoint.Builder(pipeline).build();
-    user.setWebRtcEndpoint(webRtcEndpoint); String videourl =
-    jsonMessage.get("videourl").getAsString(); final PlayerEndpoint
-    playerEndpoint = new PlayerEndpoint.Builder(pipeline, videourl).build();
-    user.setPlayerEndpoint(playerEndpoint); users.put(session.getId(), user);
+    final UserSession user = new UserSession();
+    MediaPipeline pipeline = kurento.createMediaPipeline();
+    user.setMediaPipeline(pipeline);
+    WebRtcEndpoint webRtcEndpoint = new WebRtcEndpoint.Builder(pipeline).build();
+    user.setWebRtcEndpoint(webRtcEndpoint);
+    String videourl = jsonMessage.get("videourl").getAsString();
+    final PlayerEndpoint playerEndpoint = new PlayerEndpoint.Builder(pipeline, videourl).build();
+    user.setPlayerEndpoint(playerEndpoint);
+    users.put(session.getId(), user);
 
     playerEndpoint.connect(webRtcEndpoint);
 
     // 2. WebRtcEndpoint // ICE candidates
-    webRtcEndpoint.addIceCandidateFoundListener(new
-    EventListener<IceCandidateFoundEvent>() {
+    webRtcEndpoint.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
       @Override public void onEvent(IceCandidateFoundEvent event) {
         JsonObject response = new JsonObject();
-        response.addProperty("id", "iceCandidate"); response.add("candidate",
-        JsonUtils.toJsonObject(event.getCandidate())); try {
+        response.addProperty("id", "iceCandidate");
+        response.add("candidate", JsonUtils.toJsonObject(event.getCandidate()));
+        try {
           synchronized (session) {
-            session.sendMessage(new
-            TextMessage(response.toString()));
+            session.sendMessage(new TextMessage(response.toString()));
           }
         } catch (IOException e) {
           log.debug(e.getMessage());
@@ -281,15 +280,15 @@ message.
       }
     });
 
-    String sdpOffer = jsonMessage.get("sdpOffer").getAsString(); String
-    sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
+    String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
+    String sdpAnswer = webRtcEndpoint.processOffer(sdpOffer);
 
-    JsonObject response = new JsonObject(); response.addProperty("id",
-    "startResponse"); response.addProperty("sdpAnswer", sdpAnswer);
+    JsonObject response = new JsonObject();
+    response.addProperty("id", "startResponse");
+    response.addProperty("sdpAnswer", sdpAnswer);
     sendMessage(session, response.toString());
 
-    webRtcEndpoint.addMediaStateChangedListener(new
-    EventListener<MediaStateChangedEvent>() {
+    webRtcEndpoint.addMediaStateChangedListener(new EventListener<MediaStateChangedEvent>() {
       @Override public void onEvent(MediaStateChangedEvent event) {
 
         if (event.getNewState() == MediaState.CONNECTED) {
@@ -351,15 +350,15 @@ back the information about the video, so the client side can refresh the stats.
     UserSession user = users.get(session.getId());
 
     if (user != null) {
-      user.getPlayerEndpoint().play(); VideoInfo videoInfo =
-      user.getPlayerEndpoint().getVideoInfo();
+      user.getPlayerEndpoint().play();
+      VideoInfo videoInfo = user.getPlayerEndpoint().getVideoInfo();
 
-      JsonObject response = new JsonObject(); response.addProperty("id",
-      "videoInfo"); response.addProperty("isSeekable",
-      videoInfo.getIsSeekable()); response.addProperty("initSeekable",
-      videoInfo.getSeekableInit()); response.addProperty("endSeekable",
-      videoInfo.getSeekableEnd()); response.addProperty("videoDuration",
-      videoInfo.getDuration()); sendMessage(session, response.toString());
+      JsonObject response = new JsonObject(); response.addProperty("id", "videoInfo");
+      response.addProperty("isSeekable", videoInfo.getIsSeekable());
+      response.addProperty("initSeekable", videoInfo.getSeekableInit());
+      response.addProperty("endSeekable", videoInfo.getSeekableEnd());
+      response.addProperty("videoDuration", videoInfo.getDuration());
+      sendMessage(session, response.toString());
     }
   }
 
@@ -376,10 +375,11 @@ message is sent back to the client if the seek fails.
       try {
         user.getPlayerEndpoint().setPosition(jsonMessage.get("position").getAsLong());
       } catch (KurentoException e) {
-        log.debug("The seek cannot be performed"); JsonObject response =
-        new JsonObject(); response.addProperty("id", "seek");
-        response.addProperty("message", "Seek failed"); sendMessage(session,
-        response.toString());
+        log.debug("The seek cannot be performed");
+        JsonObject response = new JsonObject();
+        response.addProperty("id", "seek");
+        response.addProperty("message", "Seek failed");
+        sendMessage(session, response.toString());
       }
     }
   }
@@ -396,8 +396,9 @@ actual position of the video.
     if (user != null) {
       long position = user.getPlayerEndpoint().getPosition();
 
-      JsonObject response = new JsonObject(); response.addProperty("id",
-      "position"); response.addProperty("position", position);
+      JsonObject response = new JsonObject();
+      response.addProperty("id", "position");
+      response.addProperty("position", position);
       sendMessage(session, response.toString());
     }
   }
@@ -423,8 +424,8 @@ client when an exception is caught in the server-side.
 
   private void sendError(WebSocketSession session, String message) {
     try {
-      JsonObject response = new JsonObject(); response.addProperty("id",
-      "error"); response.addProperty("message", message);
+      JsonObject response = new JsonObject();
+      response.addProperty("id", "error"); response.addProperty("message", message);
       session.sendMessage(new TextMessage(response.toString()));
     } catch (IOException e) {
       log.error("Exception sending message", e);
@@ -509,8 +510,7 @@ WebRTC communication.
       showSpinner(video);
 
       var mode = $('input[name="mode"]:checked').val();
-      console
-            .log('Creating WebRtcPeer in " + mode + " mode and generating local sdp offer ...');
+      console.log('Creating WebRtcPeer in " + mode + " mode and generating local sdp offer ...');
 
       // Video and audio by default
       var userMediaConstraints = {
